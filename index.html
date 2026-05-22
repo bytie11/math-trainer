@@ -1693,6 +1693,13 @@ main {
             <div class="accuracy-bar-label">Accuracy Breakdown</div>
             <div class="accuracy-stacked-bar" id="accuracy-bar"></div>
           </div>
+
+          <!-- Clear Stats Button -->
+          <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+            <button id="btn-clear-stats" style="background: transparent; border: none; color: var(--color-text-muted); font-size: 0.85rem; font-weight: 500; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); transition: color var(--transition-fast);" onmouseover="this.style.color='var(--color-primary)'" onmouseout="this.style.color='var(--color-text-muted)'">
+              Clear stats
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -1823,7 +1830,7 @@ const AppState = {
 
   // Session data
   currentSession: null,
-  sessionHistory: [],
+  sessions: [],
 
   // Totals
   totalCorrect: 0,
@@ -2947,7 +2954,8 @@ function endSession() {
   AppState.totalIncorrect += session.incorrect;
 
   // Store in history
-  AppState.sessionHistory.push(session);
+  AppState.sessions.push(session);
+  localStorage.setItem('mathTrainerSessions', JSON.stringify(AppState.sessions));
 
   // Navigate to results
   navigate('#results');
@@ -2969,7 +2977,7 @@ function renderResults() {
   const totalAnswered = session.correct + session.incorrect;
 
   // Check for personal best
-  const allScores = AppState.sessionHistory.map(s => s.scorePerMin);
+  const allScores = AppState.sessions.map(s => s.scorePerMin);
   const isPB = allScores.length <= 1 || session.scorePerMin >= Math.max(...allScores);
 
   // Animate score counter
@@ -2983,7 +2991,7 @@ function renderResults() {
 
   // Comment
   let comment = 'Keep pushing — consistency is key 💪';
-  if (isPB && AppState.sessionHistory.length > 1) {
+  if (isPB && AppState.sessions.length > 1) {
     comment = 'New personal best! 🏆';
   } else if (session.accuracy >= 90) {
     comment = 'Great session! 🔥';
@@ -2998,7 +3006,7 @@ function renderResults() {
 
   // PB badge
   const pbBadge = document.getElementById('results-pb-badge');
-  if (isPB && AppState.sessionHistory.length > 1) {
+  if (isPB && AppState.sessions.length > 1) {
     setTimeout(() => {
       pbBadge.classList.add('visible');
       // Confetti!
@@ -3077,7 +3085,7 @@ function animateCounter(el, target, suffix) {
    ANALYTICS
    ============================================================ */
 function updateAnalytics() {
-  const history = AppState.sessionHistory;
+  const history = AppState.sessions;
 
   // KPIs
   if (history.length > 0) {
@@ -3333,6 +3341,15 @@ function announceToSR(text) {
    INITIALIZATION
    ============================================================ */
 function init() {
+  // Load saved sessions
+  const saved = localStorage.getItem('mathTrainerSessions');
+  if (saved) {
+    AppState.sessions = JSON.parse(saved);
+    // Recalculate totals from loaded history
+    AppState.totalCorrect = AppState.sessions.reduce((sum, s) => sum + s.correct, 0);
+    AppState.totalIncorrect = AppState.sessions.reduce((sum, s) => sum + s.incorrect, 0);
+  }
+
   initTheme();
   initControlPanel();
   toggleAnswerOptionsVisibility();
@@ -3342,6 +3359,20 @@ function init() {
   // Wire header buttons
   document.getElementById('btn-theme-toggle').addEventListener('click', toggleTheme);
   document.getElementById('btn-sound-toggle').addEventListener('click', toggleSound);
+
+  // Wire clear stats button
+  const clearBtn = document.getElementById('btn-clear-stats');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all your performance statistics? This cannot be undone.')) {
+        AppState.sessions = [];
+        AppState.totalCorrect = 0;
+        AppState.totalIncorrect = 0;
+        localStorage.removeItem('mathTrainerSessions');
+        updateAnalytics();
+      }
+    });
+  }
 
   // Initialize Lucide icons
   lucide.createIcons();
