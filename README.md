@@ -24,10 +24,10 @@ A professional **mental math trainer** designed for traders and professionals wh
 **No build tools or server required.** Just open the HTML file in your browser:
 
 ```bash
-open math-trainer.html
+open index.html
 ```
 
-Or double-click `math-trainer.html` in your file manager.
+Or double-click `index.html` in your file manager.
 
 ## Live Demo
 
