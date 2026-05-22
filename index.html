@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tradermath Math Trainer — Sharpen Your Mental Arithmetic</title>
   <meta name="description" content="A professional mental math trainer for traders and professionals. Practice addition, subtraction, multiplication, and division with timed sessions and performance analytics.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Math Trainer">
+  <meta name="theme-color" content="#3d1515">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233d1515'/><text y='.9em' font-size='70' x='15'>🧮</text></svg>">
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -83,6 +89,8 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -93,6 +101,8 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Skip to content link */
@@ -197,9 +207,11 @@ body {
   position: relative;
 }
 
-.header-btn:hover {
-  color: #ffffff;
-  background: rgba(255,255,255,0.08);
+@media (hover: hover) {
+  .header-btn:hover {
+    color: #ffffff;
+    background: rgba(255,255,255,0.08);
+  }
 }
 
 .header-btn:focus-visible {
@@ -372,6 +384,8 @@ main {
   display: flex;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .toggle-label .op-symbol {
@@ -632,8 +646,10 @@ main {
   font-family: var(--font-body);
 }
 
-.segmented-btn:hover {
-  color: var(--color-text);
+@media (hover: hover) {
+  .segmented-btn:hover {
+    color: var(--color-text);
+  }
 }
 
 .segmented-btn.active {
@@ -666,9 +682,11 @@ main {
   font-family: var(--font-body);
 }
 
-.pill-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+@media (hover: hover) {
+  .pill-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
 }
 
 .pill-btn.active {
@@ -703,10 +721,12 @@ main {
   box-shadow: 0 4px 14px rgba(192,57,43,0.25);
 }
 
-.start-btn:hover {
-  background: var(--color-primary-hover);
-  box-shadow: 0 6px 20px rgba(192,57,43,0.35);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .start-btn:hover {
+    background: var(--color-primary-hover);
+    box-shadow: 0 6px 20px rgba(192,57,43,0.35);
+    transform: translateY(-1px);
+  }
 }
 
 .start-btn:active {
@@ -984,16 +1004,19 @@ main {
   user-select: none;
 }
 
-.answer-tile:hover {
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-tile-hover);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .answer-tile:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-tile-hover);
+    transform: translateY(-2px);
+  }
 }
 
 .answer-tile:active {
   transform: translateY(0);
 }
 
+.answer-tile:focus { outline: none; }
 .answer-tile:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -1089,8 +1112,10 @@ main {
   font-family: var(--font-body);
 }
 
-.submit-answer-btn:hover {
-  background: var(--color-primary-hover);
+@media (hover: hover) {
+  .submit-answer-btn:hover {
+    background: var(--color-primary-hover);
+  }
 }
 
 .submit-answer-btn:focus-visible {
@@ -1115,8 +1140,10 @@ main {
   font-family: var(--font-body);
 }
 
-.end-session-link:hover {
-  color: var(--color-error);
+@media (hover: hover) {
+  .end-session-link:hover {
+    color: var(--color-error);
+  }
 }
 
 .end-session-link:focus-visible {
@@ -1268,9 +1295,11 @@ main {
   font-family: var(--font-body);
 }
 
-.btn-primary:hover {
-  background: var(--color-primary-hover);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .btn-primary:hover {
+    background: var(--color-primary-hover);
+    transform: translateY(-1px);
+  }
 }
 
 .btn-primary:focus-visible {
@@ -1294,9 +1323,11 @@ main {
   font-family: var(--font-body);
 }
 
-.btn-ghost:hover {
-  background: var(--color-surface-2);
-  border-color: var(--color-text-faint);
+@media (hover: hover) {
+  .btn-ghost:hover {
+    background: var(--color-surface-2);
+    border-color: var(--color-text-faint);
+  }
 }
 
 .btn-ghost:focus-visible {
@@ -1396,18 +1427,22 @@ main {
 
   .operations-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .slider-group {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 
   .segmented-row {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .kpi-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
 
   .charts-grid {
@@ -1416,6 +1451,7 @@ main {
 
   .answer-tiles {
     grid-template-columns: 1fr 1fr;
+    max-width: 100%;
   }
 
   main {
@@ -1436,19 +1472,159 @@ main {
     width: 100%;
     justify-content: center;
   }
+
+  /* Sliders, toggles, segmented controls: full width on mobile */
+  .segmented-control {
+    display: flex;
+    width: 100%;
+  }
+
+  .segmented-btn {
+    flex: 1;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+  }
+
+  .pill-selector {
+    display: flex;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .pill-btn {
+    flex: 1;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+  }
+
+  .number-types-grid {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .number-type-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    padding: 4px 0;
+  }
+
+  .toggle-row {
+    min-height: 44px;
+    padding: 4px 0;
+  }
+
+  /* Target height ≥44px for header buttons and other buttons */
+  .header-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .end-session-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+  }
+
+  #btn-clear-stats {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+  }
+
+  .submit-answer-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Make sure breakdown table scrolls horizontally and is legible */
+  .breakdown-table {
+    min-width: 500px;
+  }
+
+  .breakdown-table-container {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .card {
+    padding: 16px;
+  }
+
+  .results-card {
+    padding: 32px 16px;
+  }
+
+  .app-header {
+    padding: 0 16px;
+  }
+
+  .train-header {
+    padding: 12px 16px;
+  }
+
+  .question-expression {
+    font-size: clamp(1.4rem, 7.5vw, 2.4rem);
+    margin: 15px 0 20px;
+    word-break: break-word;
+  }
 }
 
 @media (max-width: 480px) {
   .app-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
   }
 
-  .question-expression {
-    font-size: clamp(1.8rem, 6vw, 2.5rem);
+  .header-left {
+    gap: 8px;
   }
 
   .results-score {
     font-size: 2.2rem;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+  .modal-actions .btn-ghost,
+  .modal-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .kpi-card {
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .kpi-label {
+    margin-bottom: 0;
+  }
+  .kpi-value {
+    font-size: 1.2rem;
   }
 }
 
@@ -1508,28 +1684,28 @@ main {
           <div class="section-label">Operations</div>
           <div class="operations-grid" id="operations-grid">
             <div class="toggle-row">
-              <span class="toggle-label">Addition <span class="op-symbol">+</span></span>
+              <label for="op-add" class="toggle-label">Addition <span class="op-symbol">+</span></label>
               <label class="toggle-switch">
                 <input type="checkbox" id="op-add" checked data-op="add">
                 <span class="toggle-track"></span>
               </label>
             </div>
             <div class="toggle-row">
-              <span class="toggle-label">Subtraction <span class="op-symbol">−</span></span>
+              <label for="op-sub" class="toggle-label">Subtraction <span class="op-symbol">−</span></label>
               <label class="toggle-switch">
                 <input type="checkbox" id="op-sub" checked data-op="sub">
                 <span class="toggle-track"></span>
               </label>
             </div>
             <div class="toggle-row">
-              <span class="toggle-label">Multiplication <span class="op-symbol">×</span></span>
+              <label for="op-mul" class="toggle-label">Multiplication <span class="op-symbol">×</span></label>
               <label class="toggle-switch">
                 <input type="checkbox" id="op-mul" checked data-op="mul">
                 <span class="toggle-track"></span>
               </label>
             </div>
             <div class="toggle-row">
-              <span class="toggle-label">Division <span class="op-symbol">÷</span></span>
+              <label for="op-div" class="toggle-label">Division <span class="op-symbol">÷</span></label>
               <label class="toggle-switch">
                 <input type="checkbox" id="op-div" checked data-op="div">
                 <span class="toggle-track"></span>
@@ -1543,21 +1719,21 @@ main {
           <div class="section-label">Number types</div>
           <div class="number-types-grid">
             <div class="number-type-item">
-              <span class="toggle-label">Integers</span>
+              <label for="type-int" class="toggle-label">Integers</label>
               <label class="toggle-switch">
                 <input type="checkbox" id="type-int" checked data-numtype="int">
                 <span class="toggle-track"></span>
               </label>
             </div>
             <div class="number-type-item">
-              <span class="toggle-label">Decimals</span>
+              <label for="type-dec" class="toggle-label">Decimals</label>
               <label class="toggle-switch">
                 <input type="checkbox" id="type-dec" data-numtype="dec">
                 <span class="toggle-track"></span>
               </label>
             </div>
             <div class="number-type-item">
-              <span class="toggle-label">Fractions</span>
+              <label for="type-frac" class="toggle-label">Fractions</label>
               <label class="toggle-switch">
                 <input type="checkbox" id="type-frac" data-numtype="frac">
                 <span class="toggle-track"></span>
@@ -2619,6 +2795,8 @@ function startTimer() {
 function showNextQuestion() {
   const session = AppState.currentSession;
   if (session.isFinished) return;
+
+  document.activeElement?.blur();
 
   // Check if we've exhausted all questions
   if (session.totalQuestions !== Infinity && session.currentIndex >= session.totalQuestions) {
