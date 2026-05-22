@@ -2654,7 +2654,14 @@ function showNextQuestion() {
   }, 100);
 
   // Announce to screen readers
-  announceToSR(`Question ${session.currentIndex}. ${question.a} ${question.symbol} ${question.b}. ${question.difficulty} difficulty.`);
+  let announceText = `Question ${session.currentIndex}. `;
+  if (question.numType === 'frac') {
+    announceText += `${question.a.num}/${question.a.den} ${question.symbol} ${question.b.num}/${question.b.den}`;
+  } else {
+    announceText += `${question.a} ${question.symbol} ${question.b}`;
+  }
+  announceText += `. ${question.difficulty} difficulty.`;
+  announceToSR(announceText);
 
   // Render answer area
   if (session.questionType === 'mc') {
