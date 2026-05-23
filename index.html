@@ -41,6 +41,10 @@
   --color-error-light: rgba(231,76,60,0.1);
   --color-warning: #f39c12;
   --color-warning-light: rgba(243,156,18,0.1);
+  --color-beginner: #3498db;
+  --color-beginner-light: rgba(52,152,219,0.1);
+  --color-expert: #9b59b6;
+  --color-expert-light: rgba(155,89,182,0.1);
   --shadow-card: 0 2px 8px rgba(0,0,0,0.07);
   --shadow-elevated: 0 12px 40px rgba(0,0,0,0.12);
   --shadow-tile: 0 1px 4px rgba(0,0,0,0.06);
@@ -75,6 +79,10 @@
   --color-error-light: rgba(248,113,113,0.12);
   --color-warning: #fbbf24;
   --color-warning-light: rgba(251,191,36,0.12);
+  --color-beginner: #60a5fa;
+  --color-beginner-light: rgba(96,165,250,0.12);
+  --color-expert: #c084fc;
+  --color-expert-light: rgba(192,132,252,0.12);
   --shadow-card: 0 2px 8px rgba(0,0,0,0.25);
   --shadow-elevated: 0 12px 40px rgba(0,0,0,0.4);
   --shadow-tile: 0 1px 4px rgba(0,0,0,0.2);
@@ -663,6 +671,40 @@ main {
   outline-offset: 2px;
 }
 
+/* Full-width difficulty segmented control */
+.difficulty-control {
+  display: flex;
+  width: 100%;
+}
+
+.difficulty-control .segmented-btn {
+  flex: 1;
+  text-align: center;
+  padding: 7px 6px;
+  font-size: 0.8rem;
+}
+
+/* Results difficulty badge */
+.results-difficulty {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.results-difficulty .diff-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
 /* Pill selector for answer options count */
 .pill-selector {
   display: inline-flex;
@@ -931,6 +973,11 @@ main {
   letter-spacing: 0.03em;
 }
 
+.difficulty-pill.beginner {
+  background: var(--color-beginner-light);
+  color: var(--color-beginner);
+}
+
 .difficulty-pill.easy {
   background: var(--color-success-light);
   color: var(--color-success);
@@ -944,6 +991,11 @@ main {
 .difficulty-pill.hard {
   background: var(--color-error-light);
   color: var(--color-error);
+}
+
+.difficulty-pill.expert {
+  background: var(--color-expert-light);
+  color: var(--color-expert);
 }
 
 .streak-badge {
@@ -1743,6 +1795,18 @@ main {
 
           <hr class="section-divider">
 
+          <!-- Difficulty -->
+          <div class="section-label">Difficulty</div>
+          <div class="segmented-control difficulty-control" role="radiogroup" aria-label="Difficulty level" id="difficulty-selector">
+            <button class="segmented-btn" data-difficulty="beginner" role="radio" aria-checked="false">Beginner</button>
+            <button class="segmented-btn" data-difficulty="easy" role="radio" aria-checked="false">Easy</button>
+            <button class="segmented-btn active" data-difficulty="medium" role="radio" aria-checked="true">Medium</button>
+            <button class="segmented-btn" data-difficulty="hard" role="radio" aria-checked="false">Hard</button>
+            <button class="segmented-btn" data-difficulty="expert" role="radio" aria-checked="false">Expert</button>
+          </div>
+
+          <hr class="section-divider">
+
           <!-- Session Settings — Sliders -->
           <div class="slider-group">
             <div class="slider-item">
@@ -1941,6 +2005,7 @@ main {
           </div>
           <div class="results-subtitle" id="results-subtitle">0 / 0 correct (0%)</div>
           <div class="results-time" id="results-time">Time elapsed: 0:00</div>
+          <div class="results-difficulty" id="results-difficulty">Difficulty: <span class="diff-badge">Medium</span></div>
           <div class="results-comment" id="results-comment">Great session! 🔥</div>
 
           <div class="breakdown-table-container">
@@ -1999,6 +2064,7 @@ const AppState = {
   // Settings
   operations: { add: true, sub: true, mul: true, div: true },
   numberTypes: { int: true, dec: false, frac: false },
+  difficulty: 'medium', // 'beginner' | 'easy' | 'medium' | 'hard' | 'expert'
   duration: 2,       // minutes
   questionCount: 60, // number of questions (Infinity for unlimited)
   questionType: 'mc', // 'mc' | 'open'
@@ -2211,6 +2277,32 @@ function initControlPanel() {
     });
   });
 
+  // Set initial active state for difficulty based on AppState.difficulty
+  document.querySelectorAll('[data-difficulty]').forEach(btn => {
+    if (btn.dataset.difficulty === AppState.difficulty) {
+      btn.classList.add('active');
+      btn.setAttribute('aria-checked', 'true');
+    } else {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-checked', 'false');
+    }
+  });
+
+  // Difficulty segmented control
+  document.querySelectorAll('[data-difficulty]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-difficulty]').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-checked', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-checked', 'true');
+      AppState.difficulty = btn.dataset.difficulty;
+      localStorage.setItem('mathTrainerDifficulty', AppState.difficulty);
+      playClickSound();
+    });
+  });
+
   // Start button
   document.getElementById('btn-start').addEventListener('click', () => {
     playClickSound();
@@ -2273,11 +2365,121 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pickUnknownSide() {
+function pickUnknownSide(difficulty) {
+  if (difficulty === 'expert') {
+    // Expert: equal probability for all three positions
+    const r = Math.random();
+    if (r < 0.33) return 'result';
+    if (r < 0.66) return 'left';
+    return 'right';
+  }
+  // All other levels: mostly result, sometimes left/right
   const r = Math.random();
   if (r < 0.6) return 'result';
   if (r < 0.8) return 'left';
   return 'right';
+}
+
+/* ---- Difficulty parameter system ---- */
+function getDifficultyParams(op, numType, difficulty) {
+  const params = {};
+
+  if (numType === 'int') {
+    switch (difficulty) {
+      case 'beginner':
+        if (op === 'add' || op === 'sub') {
+          params.minA = 1; params.maxA = 10; params.minB = 1; params.maxB = 10;
+        } else if (op === 'mul') {
+          params.minA = 1; params.maxA = 10; params.minB = 2; params.maxB = 10;
+        } else { // div
+          params.minDivisor = 2; params.maxDivisor = 10; params.minQuotient = 1; params.maxQuotient = 10;
+        }
+        params.comfortableSub = true;
+        break;
+      case 'easy':
+        if (op === 'add' || op === 'sub') {
+          params.minA = 1; params.maxA = 25; params.minB = 1; params.maxB = 25;
+        } else if (op === 'mul') {
+          params.minA = 1; params.maxA = 25; params.minB = 2; params.maxB = 12;
+        } else {
+          params.minDivisor = 2; params.maxDivisor = 10; params.minQuotient = 2; params.maxQuotient = 25;
+        }
+        params.comfortableSub = true;
+        break;
+      case 'medium':
+        if (op === 'add' || op === 'sub') {
+          params.minA = 1; params.maxA = 99; params.minB = 1; params.maxB = 99;
+        } else if (op === 'mul') {
+          params.minA = 1; params.maxA = 99; params.minB = 2; params.maxB = 12;
+        } else {
+          params.minDivisor = 2; params.maxDivisor = 12; params.minQuotient = 2; params.maxQuotient = 99;
+        }
+        params.comfortableSub = false;
+        break;
+      case 'hard':
+        if (op === 'add' || op === 'sub') {
+          params.minA = 1; params.maxA = 999; params.minB = 1; params.maxB = 999;
+        } else if (op === 'mul') {
+          params.minA = 1; params.maxA = 999; params.minB = 2; params.maxB = 25;
+        } else {
+          params.minDivisor = 2; params.maxDivisor = 25; params.minQuotient = 2; params.maxQuotient = 99;
+        }
+        params.comfortableSub = false;
+        break;
+      case 'expert':
+        if (op === 'add' || op === 'sub') {
+          params.minA = 1; params.maxA = 999; params.minB = 1; params.maxB = 999;
+        } else if (op === 'mul') {
+          params.minA = 1; params.maxA = 999; params.minB = 2; params.maxB = 99;
+        } else {
+          params.minDivisor = 2; params.maxDivisor = 99; params.minQuotient = 2; params.maxQuotient = 999;
+        }
+        params.comfortableSub = false;
+        break;
+    }
+  } else if (numType === 'dec') {
+    switch (difficulty) {
+      case 'beginner':
+        params.decimalPlaces = 1; params.minVal = 1.0; params.maxVal = 9.9; params.clean = true;
+        params.mulMinB = 2; params.mulMaxB = 5; params.divMinB = 2; params.divMaxB = 5;
+        break;
+      case 'easy':
+        params.decimalPlaces = 1; params.minVal = 0.1; params.maxVal = 19.9; params.clean = false;
+        params.mulMinB = 2; params.mulMaxB = 9; params.divMinB = 2; params.divMaxB = 9;
+        break;
+      case 'medium':
+        params.decimalPlaces = 1; params.minVal = 0.1; params.maxVal = 99.9; params.clean = false;
+        params.mulMinB = 2; params.mulMaxB = 12; params.divMinB = 2; params.divMaxB = 12;
+        break;
+      case 'hard':
+        params.decimalPlaces = 2; params.minVal = 0.01; params.maxVal = 99.99; params.clean = false;
+        params.mulMinB = 2; params.mulMaxB = 15; params.divMinB = 2; params.divMaxB = 15;
+        break;
+      case 'expert':
+        params.decimalPlaces = 2; params.minVal = 0.01; params.maxVal = 999.99; params.clean = false;
+        params.mulMinB = 2; params.mulMaxB = 25; params.divMinB = 2; params.divMaxB = 25;
+        break;
+    }
+  } else if (numType === 'frac') {
+    switch (difficulty) {
+      case 'beginner':
+        params.denominators = [2, 3, 4]; params.unitOnly = true; params.allowMixed = false; params.twoFracOps = false;
+        break;
+      case 'easy':
+        params.denominators = [2, 3, 4]; params.unitOnly = false; params.allowMixed = false; params.twoFracOps = false;
+        break;
+      case 'medium':
+        params.denominators = [2, 3, 4, 5, 6, 7, 8]; params.unitOnly = false; params.allowMixed = false; params.twoFracOps = false;
+        break;
+      case 'hard':
+        params.denominators = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; params.unitOnly = false; params.allowMixed = true; params.twoFracOps = false;
+        break;
+      case 'expert':
+        params.denominators = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]; params.unitOnly = false; params.allowMixed = true; params.twoFracOps = true;
+        break;
+    }
+  }
+  return params;
 }
 
 /* ---- Fraction utilities ---- */
@@ -2322,6 +2524,28 @@ function fracToHTML(num, den) {
   return `<span class="frac"><span class="frac-num">${num}</span><span class="frac-bar"></span><span class="frac-den">${den}</span></span>`;
 }
 
+function fracToMixedHTML(num, den) {
+  if (den === 1) return `${num}`;
+  if (num > den) {
+    const whole = Math.floor(num / den);
+    const rem = num % den;
+    if (rem === 0) return `${whole}`;
+    return `<span class="mixed-frac">${whole}<span class="frac"><span class="frac-num">${rem}</span><span class="frac-bar"></span><span class="frac-den">${den}</span></span></span>`;
+  }
+  return fracToHTML(num, den);
+}
+
+function fracToMixedStr(num, den) {
+  if (den === 1) return `${num}`;
+  if (num > den) {
+    const whole = Math.floor(num / den);
+    const rem = num % den;
+    if (rem === 0) return `${whole}`;
+    return `${whole} ${rem}/${den}`;
+  }
+  return fracToStr(num, den);
+}
+
 function fracEqual(f1, f2) {
   const s1 = simplifyFrac(f1.num, f1.den);
   const s2 = simplifyFrac(f2.num, f2.den);
@@ -2354,54 +2578,55 @@ function generateQuestion(sessionQuestionIndex) {
 
   // Pick number type
   const numType = pickNumberType();
+  const difficulty = AppState.difficulty;
 
   if (numType === 'dec') {
-    return generateDecimalQuestion(op, sessionQuestionIndex);
+    return generateDecimalQuestion(op, difficulty);
   } else if (numType === 'frac') {
-    return generateFractionQuestion(op, sessionQuestionIndex);
+    return generateFractionQuestion(op, difficulty);
   } else {
-    return generateIntegerQuestion(op, sessionQuestionIndex);
+    return generateIntegerQuestion(op, difficulty);
   }
 }
 
-/* ---- INTEGER questions (original logic) ---- */
-function generateIntegerQuestion(op, sessionQuestionIndex) {
-  const difficultyBoost = Math.floor(sessionQuestionIndex / 10);
-  let a, b, result, symbol, expressionText, correctAnswer;
-  const unknownSide = pickUnknownSide();
-  let difficulty = 'easy';
+/* ---- INTEGER questions ---- */
+function generateIntegerQuestion(op, difficulty) {
+  const params = getDifficultyParams(op, 'int', difficulty);
+  let a, b, result, symbol;
+  const unknownSide = pickUnknownSide(difficulty);
 
   switch (op) {
     case 'add': {
-      const maxVal = Math.min(999, 100 + difficultyBoost * 80);
-      a = randInt(1, maxVal);
-      b = randInt(1, maxVal);
+      a = randInt(params.minA, params.maxA);
+      b = randInt(params.minB, params.maxB);
       result = a + b;
       symbol = '+';
       break;
     }
     case 'sub': {
-      const maxVal = Math.min(999, 100 + difficultyBoost * 80);
-      a = randInt(1, maxVal);
-      b = randInt(1, maxVal);
+      a = randInt(params.minA, params.maxA);
+      b = randInt(params.minB, params.maxB);
       if (a < b) [a, b] = [b, a];
+      // Comfortable subtraction for beginner/easy: ensure result is substantial
+      if (params.comfortableSub && (a - b) < Math.max(2, Math.floor(a * 0.2))) {
+        b = randInt(params.minB, Math.max(params.minB, Math.floor(a * 0.6)));
+        if (a < b) [a, b] = [b, a];
+      }
       result = a - b;
+      if (result < 0) { a = b + randInt(1, params.maxB); result = a - b; }
       symbol = '−';
       break;
     }
     case 'mul': {
-      const maxFirst = Math.min(99, 20 + difficultyBoost * 10);
-      const maxSecond = Math.min(12 + difficultyBoost * 2, 99);
-      a = randInt(2, maxFirst);
-      b = randInt(2, maxSecond);
+      a = randInt(params.minA, params.maxA);
+      b = randInt(params.minB, params.maxB);
       result = a * b;
       symbol = '×';
       break;
     }
     case 'div': {
-      const maxDivisor = Math.min(12 + difficultyBoost, 30);
-      b = randInt(2, maxDivisor);
-      const quotient = randInt(2, Math.min(99, 20 + difficultyBoost * 10));
+      b = randInt(params.minDivisor, params.maxDivisor);
+      const quotient = randInt(params.minQuotient, params.maxQuotient);
       a = b * quotient;
       result = quotient;
       symbol = '÷';
@@ -2409,11 +2634,7 @@ function generateIntegerQuestion(op, sessionQuestionIndex) {
     }
   }
 
-  const maxOperand = Math.max(a, b);
-  if (maxOperand <= 20) difficulty = 'easy';
-  else if (maxOperand <= 100) difficulty = 'medium';
-  else difficulty = 'hard';
-
+  let expressionText, correctAnswer;
   switch (unknownSide) {
     case 'result':
       expressionText = `${a} ${symbol} ${b} = <span class="unknown">?</span>`;
@@ -2437,61 +2658,58 @@ function generateIntegerQuestion(op, sessionQuestionIndex) {
 }
 
 /* ---- DECIMAL questions ---- */
-function generateDecimalQuestion(op, sessionQuestionIndex) {
-  const difficultyBoost = Math.floor(sessionQuestionIndex / 10);
+function generateDecimalQuestion(op, difficulty) {
+  const params = getDifficultyParams(op, 'dec', difficulty);
   let a, b, result, symbol;
-  let difficulty = 'easy';
-  const unknownSide = 'result'; // decimals always ask for result to keep it clean
+  const dp = params.decimalPlaces;
+  const factor = Math.pow(10, dp);
+  const unknownSide = 'result'; // decimals always ask for result
 
-  // Generate 1-decimal-place numbers
   function randDec(min, max) {
-    return Math.round((min + Math.random() * (max - min)) * 10) / 10;
+    if (params.clean && dp === 1) {
+      // Only produce "clean" values: .0 or .5
+      const whole = randInt(Math.ceil(min), Math.floor(max));
+      return Math.random() < 0.5 ? whole : whole + 0.5;
+    }
+    return Math.round((min + Math.random() * (max - min)) * factor) / factor;
   }
 
   switch (op) {
     case 'add': {
-      const maxVal = Math.min(99.9, 10 + difficultyBoost * 8);
-      a = randDec(0.1, maxVal);
-      b = randDec(0.1, maxVal);
-      result = Math.round((a + b) * 10) / 10;
+      a = randDec(params.minVal, params.maxVal);
+      b = randDec(params.minVal, params.maxVal);
+      result = Math.round((a + b) * factor) / factor;
       symbol = '+';
       break;
     }
     case 'sub': {
-      const maxVal = Math.min(99.9, 10 + difficultyBoost * 8);
-      a = randDec(0.1, maxVal);
-      b = randDec(0.1, maxVal);
+      a = randDec(params.minVal, params.maxVal);
+      b = randDec(params.minVal, params.maxVal);
       if (a < b) [a, b] = [b, a];
-      result = Math.round((a - b) * 10) / 10;
+      result = Math.round((a - b) * factor) / factor;
       symbol = '−';
       break;
     }
     case 'mul': {
-      const maxA = Math.min(20 + difficultyBoost * 5, 50);
-      a = randDec(1.1, maxA);
-      b = randInt(2, Math.min(9 + difficultyBoost, 12));
-      result = Math.round((a * b) * 10) / 10;
+      a = randDec(params.minVal, params.maxVal);
+      b = randInt(params.mulMinB, params.mulMaxB);
+      result = Math.round((a * b) * factor) / factor;
       symbol = '×';
       break;
     }
     case 'div': {
-      // Generate as b * result = a, all with 1 decimal
-      b = randInt(2, Math.min(9 + difficultyBoost, 12));
-      result = randDec(1.1, Math.min(15 + difficultyBoost * 3, 30));
-      a = Math.round((b * result) * 10) / 10;
-      // Recompute result to avoid floating point issues
-      result = Math.round((a / b) * 10) / 10;
+      b = randInt(params.divMinB, params.divMaxB);
+      result = randDec(Math.max(params.minVal, 1), Math.min(params.maxVal, params.maxVal / b));
+      a = Math.round((b * result) * factor) / factor;
+      result = Math.round((a / b) * factor) / factor;
       symbol = '÷';
       break;
     }
   }
 
-  const fmtA = a.toFixed(1);
-  const fmtB = op === 'mul' || op === 'div' ? `${b}` : b.toFixed(1);
-  const fmtResult = result.toFixed(1);
-
-  if (a > 20) difficulty = 'hard';
-  else if (a > 5) difficulty = 'medium';
+  const fmtA = a.toFixed(dp);
+  const fmtB = op === 'mul' || op === 'div' ? `${b}` : b.toFixed(dp);
+  const fmtResult = result.toFixed(dp);
 
   const expressionText = `${fmtA} ${symbol} ${fmtB} = <span class="unknown">?</span>`;
 
@@ -2503,19 +2721,26 @@ function generateDecimalQuestion(op, sessionQuestionIndex) {
     correctAnswer: result,
     difficulty,
     numType: 'dec',
+    decimalPlaces: dp,
   };
 }
 
 /* ---- FRACTION questions ---- */
-function generateFractionQuestion(op, sessionQuestionIndex) {
-  const difficultyBoost = Math.floor(sessionQuestionIndex / 10);
+function generateFractionQuestion(op, difficulty) {
+  const params = getDifficultyParams(op, 'frac', difficulty);
   let aNum, aDen, bNum, bDen, resultFrac, symbol;
-  let difficulty = 'easy';
 
-  // Generate a random simple fraction with denominator 2–10
   function randFrac() {
-    const den = randInt(2, Math.min(10, 4 + difficultyBoost));
-    const num = randInt(1, den * 2); // allow improper for variety
+    const den = params.denominators[randInt(0, params.denominators.length - 1)];
+    let num;
+    if (params.unitOnly) {
+      num = 1;
+    } else if (params.allowMixed) {
+      num = randInt(1, den * 2); // allow improper (mixed numbers)
+    } else {
+      num = randInt(1, den - 1); // proper fractions only
+      if (num === 0) num = 1;
+    }
     return simplifyFrac(num, den);
   }
 
@@ -2530,19 +2755,17 @@ function generateFractionQuestion(op, sessionQuestionIndex) {
       break;
     }
     case 'sub': {
-      // Ensure positive result
       let fa = randFrac();
       let fb = randFrac();
-      // Make sure a >= b
       const aVal = fa.num / fa.den;
       const bVal = fb.num / fb.den;
       if (aVal < bVal) { [fa, fb] = [fb, fa]; }
       aNum = fa.num; aDen = fa.den;
       bNum = fb.num; bDen = fb.den;
       resultFrac = fracSub(aNum, aDen, bNum, bDen);
-      // If result is negative or zero, regenerate as simple
       if (resultFrac.num <= 0) {
-        aNum = randInt(2, 5); aDen = randInt(2, 5);
+        // Fallback: ensure positive result
+        aNum = randInt(2, 5); aDen = params.denominators[0];
         bNum = 1; bDen = aDen;
         const s = simplifyFrac(aNum, aDen);
         aNum = s.num; aDen = s.den;
@@ -2553,7 +2776,7 @@ function generateFractionQuestion(op, sessionQuestionIndex) {
     }
     case 'mul': {
       const fa = randFrac();
-      const fb = randFrac();
+      const fb = params.twoFracOps ? randFrac() : { num: randInt(2, 8), den: 1 };
       aNum = fa.num; aDen = fa.den;
       bNum = fb.num; bDen = fb.den;
       resultFrac = fracMul(aNum, aDen, bNum, bDen);
@@ -2561,7 +2784,6 @@ function generateFractionQuestion(op, sessionQuestionIndex) {
       break;
     }
     case 'div': {
-      // Generate a ÷ b where b ≠ 0
       const fa = randFrac();
       let fb = randFrac();
       while (fb.num === 0) fb = randFrac();
@@ -2573,14 +2795,9 @@ function generateFractionQuestion(op, sessionQuestionIndex) {
     }
   }
 
-  // Difficulty based on denominator sizes
-  const maxDen = Math.max(aDen, bDen);
-  if (maxDen <= 4) difficulty = 'easy';
-  else if (maxDen <= 7) difficulty = 'medium';
-  else difficulty = 'hard';
-
-  const aHTML = fracToHTML(aNum, aDen);
-  const bHTML = fracToHTML(bNum, bDen);
+  const showMixed = (difficulty === 'hard' || difficulty === 'expert');
+  const aHTML = showMixed ? fracToMixedHTML(aNum, aDen) : fracToHTML(aNum, aDen);
+  const bHTML = showMixed ? fracToMixedHTML(bNum, bDen) : fracToHTML(bNum, bDen);
   const expressionText = `${aHTML} ${symbol} ${bHTML} = <span class="unknown">?</span>`;
 
   return {
@@ -2590,21 +2807,20 @@ function generateFractionQuestion(op, sessionQuestionIndex) {
     result: resultFrac,
     unknownSide: 'result',
     expressionText,
-    correctAnswer: resultFrac,         // { num, den } object
-    correctAnswerDisplay: fracToStr(resultFrac.num, resultFrac.den),
+    correctAnswer: resultFrac,
+    correctAnswerDisplay: showMixed ? fracToMixedStr(resultFrac.num, resultFrac.den) : fracToStr(resultFrac.num, resultFrac.den),
     difficulty,
     numType: 'frac',
   };
 }
 
-/* ---- Distractor generation (handles int, dec, frac) ---- */
 function generateDistractors(correctAnswer, count, question) {
   const numType = question ? question.numType : 'int';
 
   if (numType === 'frac') {
     return generateFractionDistractors(correctAnswer, count);
   } else if (numType === 'dec') {
-    return generateDecimalDistractors(correctAnswer, count);
+    return generateDecimalDistractors(correctAnswer, count, question);
   } else {
     return generateIntDistractors(correctAnswer, count);
   }
@@ -2638,17 +2854,21 @@ function generateIntDistractors(correct, count) {
   return choices;
 }
 
-function generateDecimalDistractors(correct, count) {
+function generateDecimalDistractors(correct, count, question) {
+  const dp = (question && typeof question.decimalPlaces === 'number') ? question.decimalPlaces : 1;
   const distractors = new Set();
   let attempts = 0;
-  const correctStr = correct.toFixed(1);
+  const correctStr = correct.toFixed(dp);
+  const factor = Math.pow(10, dp);
+  const step = 1 / factor;
 
   while (distractors.size < count - 1 && attempts < 200) {
     attempts++;
-    const offset = (randInt(-20, 20)) / 10; // ±2.0 in 0.1 steps
+    const maxOffsetInt = dp === 1 ? 20 : 50;
+    const offset = (randInt(-maxOffsetInt, maxOffsetInt)) / factor;
     if (offset === 0) continue;
-    const d = Math.round((correct + offset) * 10) / 10;
-    const dStr = d.toFixed(1);
+    const d = Math.round((correct + offset) * factor) / factor;
+    const dStr = d.toFixed(dp);
     if (dStr === correctStr || distractors.has(dStr)) continue;
     if (correct >= 0 && d < 0) continue;
     distractors.add(dStr);
@@ -2656,7 +2876,7 @@ function generateDecimalDistractors(correct, count) {
 
   let fb = 1;
   while (distractors.size < count - 1) {
-    const d = (correct + fb * 0.1).toFixed(1);
+    const d = (correct + fb * step).toFixed(dp);
     if (d !== correctStr && !distractors.has(d)) distractors.add(d);
     fb++;
   }
@@ -2738,6 +2958,7 @@ function startSession() {
     choiceCount: AppState.choiceCount,
     opStats: {},
     isFinished: false,
+    difficulty: AppState.difficulty,
   };
 
   // Initialize op stats
@@ -2891,11 +3112,12 @@ function renderMCAnswers(question) {
 
     if (question.numType === 'frac') {
       // choice is { num, den }
-      displayText = fracToHTML(choice.num, choice.den);
+      const showMixed = (question.difficulty === 'hard' || question.difficulty === 'expert');
+      displayText = showMixed ? fracToMixedHTML(choice.num, choice.den) : fracToHTML(choice.num, choice.den);
       dataVal = fracToStr(choice.num, choice.den);
-      ariaLabel = `Answer: ${fracToStr(choice.num, choice.den)}`;
+      ariaLabel = `Answer: ${showMixed ? fracToMixedStr(choice.num, choice.den) : fracToStr(choice.num, choice.den)}`;
     } else if (question.numType === 'dec') {
-      // choice is a string like "3.5"
+      // choice is a string like "3.5" or "3.55"
       displayText = choice;
       dataVal = choice;
       ariaLabel = `Answer: ${choice}`;
@@ -2927,7 +3149,8 @@ function handleMCAnswer(selectedVal, tile, question, container) {
   if (question.numType === 'frac') {
     correctVal = fracToStr(question.correctAnswer.num, question.correctAnswer.den);
   } else if (question.numType === 'dec') {
-    correctVal = question.correctAnswer.toFixed(1);
+    const dp = (question && typeof question.decimalPlaces === 'number') ? question.decimalPlaces : 1;
+    correctVal = question.correctAnswer.toFixed(dp);
   } else {
     correctVal = `${question.correctAnswer}`;
   }
@@ -3003,28 +3226,44 @@ function handleOpenAnswer() {
   let isCorrect = false;
 
   if (question.numType === 'frac') {
-    // Accept "num/den" or whole number
-    if (value.includes('/')) {
-      const parts = value.split('/');
-      if (parts.length === 2) {
-        const userNum = parseInt(parts[0]);
-        const userDen = parseInt(parts[1]);
-        if (!isNaN(userNum) && !isNaN(userDen) && userDen !== 0) {
-          const userSimp = simplifyFrac(userNum, userDen);
-          isCorrect = fracEqual(userSimp, question.correctAnswer);
-        }
+    // Accept "num/den", whole number, or mixed number e.g. "1 1/2", "1_1/2", "1-1/2"
+    let userNum = 0, userDen = 1, isParsed = false;
+    const mixedRegex = /^(\d+)[-\s_]+(\d+)\/(\d+)$/;
+    const normalFracRegex = /^(\d+)\/(\d+)$/;
+    const wholeRegex = /^(\d+)$/;
+    
+    let match;
+    if ((match = value.match(mixedRegex))) {
+      const whole = parseInt(match[1]);
+      const num = parseInt(match[2]);
+      const den = parseInt(match[3]);
+      if (den !== 0) {
+        userNum = whole * den + num;
+        userDen = den;
+        isParsed = true;
       }
-    } else {
-      const numVal = parseFloat(value);
-      if (!isNaN(numVal) && question.correctAnswer.den === 1) {
-        isCorrect = numVal === question.correctAnswer.num;
+    } else if ((match = value.match(normalFracRegex))) {
+      userNum = parseInt(match[1]);
+      userDen = parseInt(match[2]);
+      if (userDen !== 0) {
+        isParsed = true;
       }
+    } else if ((match = value.match(wholeRegex))) {
+      userNum = parseInt(match[1]);
+      userDen = 1;
+      isParsed = true;
+    }
+
+    if (isParsed) {
+      const userSimp = simplifyFrac(userNum, userDen);
+      isCorrect = fracEqual(userSimp, question.correctAnswer);
     }
   } else if (question.numType === 'dec') {
     const numVal = parseFloat(value);
     if (isNaN(numVal)) return;
-    // Compare rounded to 1 decimal
-    isCorrect = numVal.toFixed(1) === question.correctAnswer.toFixed(1);
+    const dp = (question && typeof question.decimalPlaces === 'number') ? question.decimalPlaces : 1;
+    // Compare rounded to actual decimal places
+    isCorrect = numVal.toFixed(dp) === question.correctAnswer.toFixed(dp);
   } else {
     const numVal = parseFloat(value);
     if (isNaN(numVal)) return;
@@ -3034,9 +3273,11 @@ function handleOpenAnswer() {
   answerLocked = true;
 
   const timeTaken = (Date.now() - session.currentQuestionStart) / 1000;
+  const dp = (question && typeof question.decimalPlaces === 'number') ? question.decimalPlaces : 1;
+  const showMixed = (question.difficulty === 'hard' || question.difficulty === 'expert');
   const correctDisplay = question.numType === 'frac'
-    ? question.correctAnswerDisplay
-    : (question.numType === 'dec' ? question.correctAnswer.toFixed(1) : question.correctAnswer);
+    ? (showMixed ? fracToMixedStr(question.correctAnswer.num, question.correctAnswer.den) : question.correctAnswerDisplay)
+    : (question.numType === 'dec' ? question.correctAnswer.toFixed(dp) : question.correctAnswer);
 
   session.answers.push({
     question,
@@ -3166,6 +3407,12 @@ function renderResults() {
     `${session.correct} / ${totalAnswered} correct (${session.accuracy}%)`;
   document.getElementById('results-time').textContent =
     `Time elapsed: ${minutes}:${String(seconds).padStart(2, '0')}`;
+
+  const diffBadge = document.querySelector('#results-difficulty .diff-badge');
+  if (diffBadge) {
+    const diff = session.difficulty || 'medium';
+    diffBadge.textContent = diff.charAt(0).toUpperCase() + diff.slice(1);
+  }
 
   // Comment
   let comment = 'Keep pushing — consistency is key 💪';
@@ -3526,6 +3773,12 @@ function init() {
     // Recalculate totals from loaded history
     AppState.totalCorrect = AppState.sessions.reduce((sum, s) => sum + s.correct, 0);
     AppState.totalIncorrect = AppState.sessions.reduce((sum, s) => sum + s.incorrect, 0);
+  }
+
+  // Load saved difficulty
+  const savedDiff = localStorage.getItem('mathTrainerDifficulty');
+  if (savedDiff) {
+    AppState.difficulty = savedDiff;
   }
 
   initTheme();
