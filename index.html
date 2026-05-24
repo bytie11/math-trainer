@@ -1858,6 +1858,45 @@ main {
   }
 }
 
+/* Leaderboard tabs styling */
+.leaderboard-tabs {
+  display: flex;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.leaderboard-tabs .tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.leaderboard-tabs .tab-btn:hover {
+  color: var(--color-text);
+}
+
+.leaderboard-tabs .tab-btn.active {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(192,57,43,0.25);
+}
+
+.leaderboard-status-msg.info {
+  color: var(--color-warning);
+}
+
 /* ============================================================
    HIDDEN UTILITY
    ============================================================ */
@@ -2069,7 +2108,7 @@ main {
               </div>
             </div>
             <div class="kpi-card">
-              <div class="kpi-label">Best Accuracy</div>
+              <div class="kpi-label">Average Accuracy</div>
               <div class="kpi-value">
                 <span class="kpi-icon">✅</span>
                 <span id="kpi-accuracy">—</span>
@@ -2250,6 +2289,14 @@ main {
             </button>
           </div>
           
+          <div class="leaderboard-tabs" id="leaderboard-tabs" role="tablist" aria-label="Difficulty filter">
+            <button class="tab-btn" data-tab-diff="beginner" role="tab">Beginner</button>
+            <button class="tab-btn" data-tab-diff="easy" role="tab">Easy</button>
+            <button class="tab-btn" data-tab-diff="medium" role="tab">Medium</button>
+            <button class="tab-btn" data-tab-diff="hard" role="tab">Hard</button>
+            <button class="tab-btn" data-tab-diff="expert" role="tab">Expert</button>
+          </div>
+          
           <div class="leaderboard-table-container">
             <div id="leaderboard-loading" class="leaderboard-loading hidden">
               <!-- Skeleton rows -->
@@ -2273,7 +2320,7 @@ main {
                   <th>Username</th>
                   <th>Score (/min)</th>
                   <th>Accuracy</th>
-                  <th>Difficulty</th>
+                  <th>Options</th>
                   <th>Date</th>
                 </tr>
               </thead>
@@ -2296,6 +2343,20 @@ main {
       <div class="modal-actions">
         <button class="btn-ghost" id="modal-cancel">Cancel</button>
         <button class="btn-primary" id="modal-confirm">End session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PERSONAL BEST MODAL
+       ============================================================ -->
+  <div class="modal-overlay" id="pb-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pb-modal-title">
+    <div class="modal-box">
+      <div class="modal-title" id="pb-modal-title">🏆 New personal best!</div>
+      <div class="modal-message">Do you want to submit it to the leaderboard?</div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="pb-modal-skip">Skip</button>
+        <button class="btn-primary" id="pb-modal-submit">Submit</button>
       </div>
     </div>
   </div>
@@ -3597,7 +3658,7 @@ function updateStreakDisplay() {
   }
 }
 
-function endSession() {
+function endSession(isAbandoned = false) {
   const session = AppState.currentSession;
   if (!session || session.isFinished) return;
 
@@ -3619,13 +3680,15 @@ function endSession() {
   session.avgSpeed = Math.round(avgSpeed * 10) / 10;
   session.elapsedMs = elapsedMs;
 
-  // Update totals
-  AppState.totalCorrect += session.correct;
-  AppState.totalIncorrect += session.incorrect;
+  if (!isAbandoned) {
+    // Update totals
+    AppState.totalCorrect += session.correct;
+    AppState.totalIncorrect += session.incorrect;
 
-  // Store in history
-  AppState.sessions.push(session);
-  localStorage.setItem('mathTrainerSessions', JSON.stringify(AppState.sessions));
+    // Store in history
+    AppState.sessions.push(session);
+    localStorage.setItem('mathTrainerSessions', JSON.stringify(AppState.sessions));
+  }
 
   // Navigate to results
   navigate('#results');
@@ -3703,22 +3766,47 @@ function renderResults() {
   renderBreakdownTable(session);
 
   // Show and reset leaderboard submit form
+  const isAbandoned = !AppState.sessions.includes(session);
+
+  let isNewPB = false;
+  if (session && !isAbandoned && !session.pbModalShown) {
+    const difficulty = session.difficulty || 'medium';
+    // previous sessions excluding the current one
+    const prevSessions = AppState.sessions.slice(0, -1).filter(s => s.difficulty === difficulty);
+    const prevBest = prevSessions.length > 0 ? Math.max(...prevSessions.map(s => s.scorePerMin)) : 0;
+    isNewPB = session.scorePerMin > 0 && session.scorePerMin > prevBest;
+    if (isNewPB) {
+      session.pbModalShown = true;
+    }
+  }
+
   const submitContainer = document.getElementById('leaderboard-submit-container');
   if (submitContainer) {
-    submitContainer.classList.remove('hidden');
-    const usernameInput = document.getElementById('leaderboard-username');
-    if (usernameInput) {
-      usernameInput.value = localStorage.getItem('mathTrainerUsername') || '';
-      usernameInput.disabled = false;
+    submitContainer.classList.add('hidden'); // hidden by default
+  }
+
+  if (isNewPB) {
+    const pbModal = document.getElementById('pb-modal-overlay');
+    if (pbModal) {
+      pbModal.classList.add('active');
     }
-    const statusMsg = document.getElementById('leaderboard-status-msg');
-    if (statusMsg) {
-      statusMsg.classList.add('hidden');
-      statusMsg.textContent = '';
-    }
-    const submitBtn = document.getElementById('btn-leaderboard-submit');
-    if (submitBtn) {
-      submitBtn.disabled = false;
+  } else if (session && !isAbandoned) {
+    if (submitContainer) {
+      submitContainer.classList.remove('hidden');
+      const usernameInput = document.getElementById('leaderboard-username');
+      if (usernameInput) {
+        usernameInput.value = localStorage.getItem('mathTrainerUsername') || '';
+        usernameInput.disabled = false;
+      }
+      const statusMsg = document.getElementById('leaderboard-status-msg');
+      if (statusMsg) {
+        statusMsg.classList.add('hidden');
+        statusMsg.textContent = '';
+      }
+      const submitBtn = document.getElementById('btn-leaderboard-submit');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+      }
     }
   }
 }
@@ -3789,8 +3877,8 @@ function updateAnalytics() {
     document.getElementById('kpi-highest').textContent = bestScore.toFixed(1);
     document.getElementById('kpi-highest-unit').textContent = '/ min';
 
-    const bestAccuracy = Math.max(...history.map(s => s.accuracy));
-    document.getElementById('kpi-accuracy').textContent = bestAccuracy.toFixed(1);
+    const avgAccuracy = history.reduce((sum, s) => sum + s.accuracy, 0) / history.length;
+    document.getElementById('kpi-accuracy').textContent = avgAccuracy.toFixed(1);
     document.getElementById('kpi-accuracy-unit').textContent = '%';
 
     const avgSpeed = history.reduce((sum, s) => sum + s.scorePerMin, 0) / history.length;
@@ -3975,7 +4063,7 @@ document.getElementById('btn-end-session').addEventListener('click', () => {
 document.getElementById('modal-cancel').addEventListener('click', hideModal);
 document.getElementById('modal-confirm').addEventListener('click', () => {
   hideModal();
-  endSession();
+  endSession(true);
 });
 
 document.getElementById('modal-overlay').addEventListener('click', (e) => {
@@ -4072,41 +4160,76 @@ function submitLeaderboardScore() {
   usernameInput.disabled = true;
   submitBtn.disabled = true;
 
-  statusMsg.textContent = "Submitting score...";
+  statusMsg.textContent = "Checking existing records...";
   statusMsg.className = "leaderboard-status-msg";
   statusMsg.classList.remove('hidden');
 
+  const difficulty = session.difficulty || 'medium';
   const activeOps = Object.keys(session.operations).filter(k => session.operations[k]).join(',');
 
-  fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
-    method: 'POST',
+  // 1. Query Supabase first to check if a row with the same username and difficulty already exists
+  fetch(`${SUPABASE_URL}/rest/v1/leaderboard?username=eq.${encodeURIComponent(username)}&difficulty=eq.${encodeURIComponent(difficulty)}`, {
+    method: 'GET',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({
-      username,
-      score: session.scorePerMin,
-      accuracy: session.accuracy,
-      difficulty: session.difficulty || 'medium',
-      operations: activeOps
-    })
+      'Content-Type': 'application/json'
+    }
   })
   .then(response => {
     if (!response.ok) {
-      throw new Error('Failed to submit');
+      throw new Error('Failed to query existing records');
     }
-    // Save username to localStorage
-    localStorage.setItem('mathTrainerUsername', username);
+    return response.json();
+  })
+  .then(rows => {
+    if (rows.length > 0) {
+      const existing = rows[0];
+      if (session.scorePerMin <= existing.score) {
+        // Skip silently, show message
+        statusMsg.textContent = "Your current record is higher — score not saved.";
+        statusMsg.className = "leaderboard-status-msg info";
+        
+        // Auto-hide form container after delay
+        setTimeout(() => {
+          document.getElementById('leaderboard-submit-container').classList.add('hidden');
+        }, 2500);
+        return;
+      }
+    }
 
-    statusMsg.textContent = "Score submitted! 🎉";
-    statusMsg.className = "leaderboard-status-msg success";
+    // 2. Perform upsert if no existing row or if new score is higher
+    statusMsg.textContent = "Submitting score...";
+    return fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        username,
+        score: session.scorePerMin,
+        accuracy: session.accuracy,
+        difficulty,
+        operations: activeOps,
+        answer_options: session.choiceCount
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to submit');
+      }
+      // Save username to localStorage
+      localStorage.setItem('mathTrainerUsername', username);
 
-    // Auto-hide form container after success
-    setTimeout(() => {
-      document.getElementById('leaderboard-submit-container').classList.add('hidden');
-    }, 1500);
+      statusMsg.textContent = "Score submitted! 🎉";
+      statusMsg.className = "leaderboard-status-msg success";
+
+      // Auto-hide form container after success
+      setTimeout(() => {
+        document.getElementById('leaderboard-submit-container').classList.add('hidden');
+      }, 1500);
+    });
   })
   .catch(error => {
     console.error('Leaderboard error:', error);
@@ -4119,7 +4242,28 @@ function submitLeaderboardScore() {
   });
 }
 
-function fetchLeaderboard() {
+let currentLeaderboardDiff = 'medium';
+
+function fetchLeaderboard(diff) {
+  if (diff) {
+    currentLeaderboardDiff = diff;
+  } else {
+    // Default tab is the difficulty used in last completed session
+    const lastSession = AppState.sessions[AppState.sessions.length - 1];
+    currentLeaderboardDiff = lastSession ? (lastSession.difficulty || 'medium') : (AppState.difficulty || 'medium');
+  }
+
+  // Update Difficulty Tabs Active State UI
+  document.querySelectorAll('[data-tab-diff]').forEach(btn => {
+    if (btn.dataset.tabDiff === currentLeaderboardDiff) {
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+    } else {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected', 'false');
+    }
+  });
+
   const loading = document.getElementById('leaderboard-loading');
   const errorDiv = document.getElementById('leaderboard-error');
   const table = document.getElementById('leaderboard-table');
@@ -4130,7 +4274,7 @@ function fetchLeaderboard() {
   table.classList.add('hidden');
   tbody.innerHTML = '';
 
-  fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=50`, {
+  fetch(`${SUPABASE_URL}/rest/v1/leaderboard?difficulty=eq.${encodeURIComponent(currentLeaderboardDiff)}&select=*&order=score.desc&limit=50`, {
     method: 'GET',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
@@ -4147,7 +4291,7 @@ function fetchLeaderboard() {
     const currentUsername = localStorage.getItem('mathTrainerUsername') || '';
 
     if (data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No scores submitted yet. Be the first!</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No scores submitted yet for this difficulty. Be the first!</td></tr>';
     } else {
       data.forEach((row, index) => {
         const tr = document.createElement('tr');
@@ -4172,14 +4316,14 @@ function fetchLeaderboard() {
 
         const score = typeof row.score === 'number' ? row.score.toFixed(1) : row.score;
         const accuracy = typeof row.accuracy === 'number' ? row.accuracy.toFixed(1) + '%' : row.accuracy;
-        const difficulty = row.difficulty ? (row.difficulty.charAt(0).toUpperCase() + row.difficulty.slice(1)) : 'Medium';
+        const options = row.answer_options || '—';
 
         tr.innerHTML = `
           <td><strong>#${rank}</strong></td>
           <td>${escapeHTML(row.username)}</td>
           <td>${score}</td>
           <td>${accuracy}</td>
-          <td><span class="diff-badge">${difficulty}</span></td>
+          <td>${options}</td>
           <td>${formattedDate}</td>
         `;
         tbody.appendChild(tr);
@@ -4238,6 +4382,46 @@ function init() {
     if (e.key === 'Enter') {
       e.preventDefault();
       submitLeaderboardScore();
+    }
+  });
+
+  // Wire difficulty filter tabs
+  document.querySelectorAll('[data-tab-diff]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      fetchLeaderboard(btn.dataset.tabDiff);
+      playClickSound();
+    });
+  });
+
+  // Wire PB modal buttons
+  document.getElementById('pb-modal-submit').addEventListener('click', () => {
+    document.getElementById('pb-modal-overlay').classList.remove('active');
+    const submitContainer = document.getElementById('leaderboard-submit-container');
+    if (submitContainer) {
+      submitContainer.classList.remove('hidden');
+      const usernameInput = document.getElementById('leaderboard-username');
+      if (usernameInput) {
+        usernameInput.value = localStorage.getItem('mathTrainerUsername') || '';
+        usernameInput.disabled = false;
+        usernameInput.focus();
+      }
+      const statusMsg = document.getElementById('leaderboard-status-msg');
+      if (statusMsg) {
+        statusMsg.classList.add('hidden');
+        statusMsg.textContent = '';
+      }
+      const submitBtn = document.getElementById('btn-leaderboard-submit');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+      }
+    }
+  });
+
+  document.getElementById('pb-modal-skip').addEventListener('click', () => {
+    document.getElementById('pb-modal-overlay').classList.remove('active');
+    const submitContainer = document.getElementById('leaderboard-submit-container');
+    if (submitContainer) {
+      submitContainer.classList.add('hidden');
     }
   });
 
