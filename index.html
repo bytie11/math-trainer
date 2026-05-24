@@ -4172,12 +4172,20 @@ function submitLeaderboardScore() {
     method: 'GET',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json'
     }
   })
   .then(response => {
     if (!response.ok) {
-      throw new Error('Failed to query existing records');
+      return response.text().then(text => {
+        let errMsg = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.message) errMsg += ` - ${parsed.message}`;
+        } catch(e) {}
+        throw new Error(errMsg);
+      });
     }
     return response.json();
   })
@@ -4199,25 +4207,36 @@ function submitLeaderboardScore() {
 
     // 2. Perform upsert if no existing row or if new score is higher
     statusMsg.textContent = "Submitting score...";
+    const payload = {
+      username,
+      score: session.scorePerMin,
+      accuracy: session.accuracy,
+      difficulty,
+      operations: activeOps,
+      answer_options: session.choiceCount
+    };
+    console.log('Submitting:', JSON.stringify(payload));
+
     return fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
       },
-      body: JSON.stringify({
-        username,
-        score: session.scorePerMin,
-        accuracy: session.accuracy,
-        difficulty,
-        operations: activeOps,
-        answer_options: session.choiceCount
-      })
+      body: JSON.stringify(payload)
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error('Failed to submit');
+        return response.text().then(text => {
+          let errMsg = `HTTP ${response.status}: ${response.statusText}`;
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed.message) errMsg += ` - ${parsed.message}`;
+          } catch(e) {}
+          throw new Error(errMsg);
+        });
       }
       // Save username to localStorage
       localStorage.setItem('mathTrainerUsername', username);
@@ -4233,7 +4252,7 @@ function submitLeaderboardScore() {
   })
   .catch(error => {
     console.error('Leaderboard error:', error);
-    statusMsg.textContent = "Failed to submit score. Please try again.";
+    statusMsg.textContent = `Failed to submit score: ${error.message || error}`;
     statusMsg.className = "leaderboard-status-msg error";
     
     // Re-enable inputs
@@ -4278,12 +4297,20 @@ function fetchLeaderboard(diff) {
     method: 'GET',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json'
     }
   })
   .then(response => {
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      return response.text().then(text => {
+        let errMsg = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.message) errMsg += ` - ${parsed.message}`;
+        } catch(e) {}
+        throw new Error(errMsg);
+      });
     }
     return response.json();
   })
