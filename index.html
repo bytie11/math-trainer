@@ -165,6 +165,17 @@ body {
   z-index: 1;
 }
 
+.logo-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .logo-icon {
   width: 32px;
   height: 32px;
@@ -1914,12 +1925,12 @@ main {
        APP HEADER
        ============================================================ -->
   <header class="app-header" role="banner">
-    <div class="header-left">
+    <a href="#home" class="header-left logo-link" aria-label="Go to home">
       <div class="logo-icon" aria-hidden="true">
         <div class="logo-triangle"></div>
       </div>
       <span class="app-title">Tradermath Math Trainer</span>
-    </div>
+    </a>
     <div class="header-right">
       <a href="#leaderboard" class="header-btn" id="btn-leaderboard" aria-label="Global Leaderboard" title="Global Leaderboard">
         <i data-lucide="trophy" width="20" height="20"></i>
@@ -4254,17 +4265,45 @@ function submitLeaderboardScore() {
     .then(res1 => {
       if (res1.success) return res1;
 
-      // Attempt 2: If failed because answer_options column is missing, try omitting it
+      // Attempt 2: If failed because answer_options column is missing, try with answeroptions spelling
       if (res1.error.includes('answer_options')) {
         const payload2 = { ...payload };
         delete payload2.answer_options;
+        payload2.answeroptions = session.choiceCount;
+
         return tryPost(payload2, true)
         .then(res2 => {
           if (res2.success) return res2;
 
-          // Attempt 3: If that failed due to ON CONFLICT / constraint missing, try omitting on_conflict parameter
+          // Attempt 3: If that failed due to answeroptions, try omitting it
+          if (res2.error.includes('answeroptions')) {
+            const payload3 = { ...payload2 };
+            delete payload3.answeroptions;
+
+            return tryPost(payload3, true)
+            .then(res3 => {
+              if (res3.success) return res3;
+              // Attempt 4: If that failed due to ON CONFLICT / constraint missing, try omitting on_conflict parameter
+              if (res3.error.includes('constraint') || res3.error.includes('ON CONFLICT') || res3.error.includes('on_conflict')) {
+                return tryPost(payload3, false);
+              }
+              throw new Error(res3.error);
+            });
+          }
+
+          // Attempt 3 (alternative): If it failed due to constraint, try omitting on_conflict (keeping answeroptions)
           if (res2.error.includes('constraint') || res2.error.includes('ON CONFLICT') || res2.error.includes('on_conflict')) {
-            return tryPost(payload2, false);
+            return tryPost(payload2, false)
+            .then(res4 => {
+              if (res4.success) return res4;
+              // If that failed due to answeroptions, try omitting it
+              if (res4.error.includes('answeroptions')) {
+                const payload4 = { ...payload2 };
+                delete payload4.answeroptions;
+                return tryPost(payload4, false);
+              }
+              throw new Error(res4.error);
+            });
           }
           throw new Error(res2.error);
         });
@@ -4273,15 +4312,27 @@ function submitLeaderboardScore() {
       // Attempt 2 (alternative): If failed due to ON CONFLICT constraint missing on Attempt 1
       if (res1.error.includes('constraint') || res1.error.includes('ON CONFLICT') || res1.error.includes('on_conflict')) {
         return tryPost(payload, false)
-        .then(res3 => {
-          if (res3.success) return res3;
-          // If that failed due to answer_options, try omitting answer_options
-          if (res3.error.includes('answer_options')) {
-            const payload3 = { ...payload };
-            delete payload3.answer_options;
-            return tryPost(payload3, false);
+        .then(res5 => {
+          if (res5.success) return res5;
+          // If that failed due to answer_options, try answeroptions spelling without on_conflict
+          if (res5.error.includes('answer_options')) {
+            const payload2 = { ...payload };
+            delete payload2.answer_options;
+            payload2.answeroptions = session.choiceCount;
+
+            return tryPost(payload2, false)
+            .then(res6 => {
+              if (res6.success) return res6;
+              // If that failed due to answeroptions, try omitting it without on_conflict
+              if (res6.error.includes('answeroptions')) {
+                const payload3 = { ...payload2 };
+                delete payload3.answeroptions;
+                return tryPost(payload3, false);
+              }
+              throw new Error(res6.error);
+            });
           }
-          throw new Error(res3.error);
+          throw new Error(res5.error);
         });
       }
 
@@ -4367,8 +4418,8 @@ function fetchLeaderboard(diff) {
       });
     }
     return response.json();
-  })
   .then(data => {
+    console.log('Leaderboard row data fetched:', data);
     const currentUsername = localStorage.getItem('mathTrainerUsername') || '';
 
     if (data.length === 0) {
@@ -4397,7 +4448,11 @@ function fetchLeaderboard(diff) {
 
         const score = typeof row.score === 'number' ? row.score.toFixed(1) : row.score;
         const accuracy = typeof row.accuracy === 'number' ? row.accuracy.toFixed(1) + '%' : row.accuracy;
-        const options = row.answer_options || '—';
+        
+        // Handle both spelling variants of the answer options column
+        const optionsVal = (row.answer_options !== undefined && row.answer_options !== null) ? row.answer_options : 
+                           ((row.answeroptions !== undefined && row.answeroptions !== null) ? row.answeroptions : null);
+        const options = optionsVal !== null ? optionsVal : '—';
 
         tr.innerHTML = `
           <td><strong>#${rank}</strong></td>
