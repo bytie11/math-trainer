@@ -1681,6 +1681,184 @@ main {
 }
 
 /* ============================================================
+   GLOBAL LEADERBOARD & SUBMIT STYLES
+   ============================================================ */
+.leaderboard-submit-container {
+  margin-top: 24px;
+}
+
+.leaderboard-submit-box {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: left;
+}
+
+.leaderboard-submit-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.leaderboard-submit-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.username-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  transition: border-color var(--transition-fast);
+}
+
+.username-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.leaderboard-submit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+
+.leaderboard-status-msg {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.leaderboard-status-msg.success {
+  color: var(--color-success);
+}
+
+.leaderboard-status-msg.error {
+  color: var(--color-error);
+}
+
+.leaderboard-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+  width: 100%;
+}
+
+.leaderboard-card {
+  padding: 24px;
+}
+
+.leaderboard-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 12px;
+}
+
+.leaderboard-table-container {
+  overflow-x: auto;
+  min-height: 200px;
+  position: relative;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.leaderboard-table th {
+  font-weight: 700;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.leaderboard-table td {
+  font-size: 0.9rem;
+}
+
+/* Highlight current user row */
+.leaderboard-table tr.highlight-user td {
+  background: var(--color-primary-light);
+  font-weight: 600;
+}
+
+/* Skeleton Loading styles */
+.leaderboard-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.skeleton-row {
+  height: 40px;
+  background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-border) 50%, var(--color-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: loading-skeleton 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes loading-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.leaderboard-error {
+  text-align: center;
+  padding: 40px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.leaderboard-error p {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.leaderboard-error .error-icon {
+  color: var(--color-error);
+}
+
+/* Header button text styling */
+.header-btn-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+@media (max-width: 480px) {
+  .header-btn-text {
+    display: none;
+  }
+}
+
+/* ============================================================
    HIDDEN UTILITY
    ============================================================ */
 .hidden { display: none !important; }
@@ -1704,6 +1882,10 @@ main {
       <span class="app-title">Tradermath Math Trainer</span>
     </div>
     <div class="header-right">
+      <a href="#leaderboard" class="header-btn" id="btn-leaderboard" aria-label="Global Leaderboard" title="Global Leaderboard">
+        <i data-lucide="trophy" width="20" height="20"></i>
+        <span class="header-btn-text">Leaderboard</span>
+      </a>
       <button class="header-btn" id="btn-sound-toggle" aria-label="Toggle sound effects" title="Sound effects">
         <i data-lucide="volume-x" width="20" height="20"></i>
       </button>
@@ -2021,6 +2203,20 @@ main {
               </thead>
               <tbody id="breakdown-tbody"></tbody>
             </table>
+          <!-- Leaderboard Score Submission Form -->
+          <div class="leaderboard-submit-container" id="leaderboard-submit-container">
+            <hr class="section-divider">
+            <div class="leaderboard-submit-box">
+              <div class="leaderboard-submit-title">Submit your score to the global leaderboard?</div>
+              <div class="leaderboard-submit-input-row">
+                <input type="text" id="leaderboard-username" class="username-input" placeholder="Enter username..." maxlength="20" aria-label="Username for leaderboard">
+                <div class="leaderboard-submit-actions">
+                  <button class="btn-primary btn-sm" id="btn-leaderboard-submit">Submit</button>
+                  <button class="btn-ghost btn-sm" id="btn-leaderboard-skip">Skip</button>
+                </div>
+              </div>
+              <div class="leaderboard-status-msg hidden" id="leaderboard-status-msg" role="status"></div>
+            </div>
           </div>
 
           <div class="results-actions">
@@ -2032,6 +2228,57 @@ main {
               <i data-lucide="settings" width="18" height="18"></i>
               Change Settings
             </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================
+         LEADERBOARD VIEW
+         ================================== -->
+    <section id="view-leaderboard" class="view" aria-label="Global Leaderboard">
+      <div class="leaderboard-container">
+        <div class="card leaderboard-card">
+          <div class="card-header">
+            <h1 class="card-title">
+              <i data-lucide="trophy" width="20" height="20" class="icon trophy-icon"></i>
+              Global Leaderboard
+            </h1>
+            <button class="btn-ghost btn-sm" id="btn-leaderboard-back">
+              <i data-lucide="arrow-left" width="16" height="16"></i>
+              Back
+            </button>
+          </div>
+          
+          <div class="leaderboard-table-container">
+            <div id="leaderboard-loading" class="leaderboard-loading hidden">
+              <!-- Skeleton rows -->
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+            </div>
+            
+            <div id="leaderboard-error" class="leaderboard-error hidden">
+              <i data-lucide="alert-circle" width="32" height="32" class="error-icon"></i>
+              <p>Failed to load leaderboard. Please check your connection and try again.</p>
+              <button class="btn-primary btn-sm" id="btn-leaderboard-retry">Retry</button>
+            </div>
+
+            <table class="leaderboard-table" id="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Username</th>
+                  <th>Score (/min)</th>
+                  <th>Accuracy</th>
+                  <th>Difficulty</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-tbody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -2196,6 +2443,10 @@ function handleRoute() {
     case '#results':
       document.getElementById('view-results').classList.add('active');
       renderResults();
+      break;
+    case '#leaderboard':
+      document.getElementById('view-leaderboard').classList.add('active');
+      fetchLeaderboard();
       break;
     case '#home':
     default:
@@ -3450,6 +3701,26 @@ function renderResults() {
 
   // Operation breakdown
   renderBreakdownTable(session);
+
+  // Show and reset leaderboard submit form
+  const submitContainer = document.getElementById('leaderboard-submit-container');
+  if (submitContainer) {
+    submitContainer.classList.remove('hidden');
+    const usernameInput = document.getElementById('leaderboard-username');
+    if (usernameInput) {
+      usernameInput.value = localStorage.getItem('mathTrainerUsername') || '';
+      usernameInput.disabled = false;
+    }
+    const statusMsg = document.getElementById('leaderboard-status-msg');
+    if (statusMsg) {
+      statusMsg.classList.add('hidden');
+      statusMsg.textContent = '';
+    }
+    const submitBtn = document.getElementById('btn-leaderboard-submit');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+    }
+  }
 }
 
 function renderBreakdownTable(session) {
@@ -3763,6 +4034,169 @@ function announceToSR(text) {
 }
 
 /* ============================================================
+   GLOBAL LEADERBOARD & SUPABASE API
+   ============================================================ */
+const SUPABASE_URL = 'https://usesjkshxdbbmdrqhqqz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzZXNqa3NoeGRiYm1kcnFocXF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDE2ODYsImV4cCI6MjA5NTE3NzY4Nn0.dRVq8udK8vymMYHM1JMHPCrDMyzCKGz0YdXLHaUgHtw';
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, 
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
+}
+
+function submitLeaderboardScore() {
+  const session = AppState.currentSession;
+  if (!session) return;
+
+  const usernameInput = document.getElementById('leaderboard-username');
+  const submitBtn = document.getElementById('btn-leaderboard-submit');
+  const statusMsg = document.getElementById('leaderboard-status-msg');
+
+  const username = usernameInput.value.trim();
+  if (username === '') {
+    statusMsg.textContent = "Please enter a username.";
+    statusMsg.className = "leaderboard-status-msg error";
+    statusMsg.classList.remove('hidden');
+    return;
+  }
+
+  // Disable inputs to prevent double clicks
+  usernameInput.disabled = true;
+  submitBtn.disabled = true;
+
+  statusMsg.textContent = "Submitting score...";
+  statusMsg.className = "leaderboard-status-msg";
+  statusMsg.classList.remove('hidden');
+
+  const activeOps = Object.keys(session.operations).filter(k => session.operations[k]).join(',');
+
+  fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      username,
+      score: session.scorePerMin,
+      accuracy: session.accuracy,
+      difficulty: session.difficulty || 'medium',
+      operations: activeOps
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to submit');
+    }
+    // Save username to localStorage
+    localStorage.setItem('mathTrainerUsername', username);
+
+    statusMsg.textContent = "Score submitted! 🎉";
+    statusMsg.className = "leaderboard-status-msg success";
+
+    // Auto-hide form container after success
+    setTimeout(() => {
+      document.getElementById('leaderboard-submit-container').classList.add('hidden');
+    }, 1500);
+  })
+  .catch(error => {
+    console.error('Leaderboard error:', error);
+    statusMsg.textContent = "Failed to submit score. Please try again.";
+    statusMsg.className = "leaderboard-status-msg error";
+    
+    // Re-enable inputs
+    usernameInput.disabled = false;
+    submitBtn.disabled = false;
+  });
+}
+
+function fetchLeaderboard() {
+  const loading = document.getElementById('leaderboard-loading');
+  const errorDiv = document.getElementById('leaderboard-error');
+  const table = document.getElementById('leaderboard-table');
+  const tbody = document.getElementById('leaderboard-tbody');
+
+  loading.classList.remove('hidden');
+  errorDiv.classList.add('hidden');
+  table.classList.add('hidden');
+  tbody.innerHTML = '';
+
+  fetch(`${SUPABASE_URL}/rest/v1/leaderboard?select=*&order=score.desc&limit=50`, {
+    method: 'GET',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    const currentUsername = localStorage.getItem('mathTrainerUsername') || '';
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No scores submitted yet. Be the first!</td></tr>';
+    } else {
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        if (currentUsername && row.username === currentUsername) {
+          tr.classList.add('highlight-user');
+        }
+
+        const rank = index + 1;
+        let formattedDate = '—';
+        if (row.created_at) {
+          try {
+            const date = new Date(row.created_at);
+            formattedDate = date.toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+          } catch (e) {
+            console.error('Error parsing date:', e);
+          }
+        }
+
+        const score = typeof row.score === 'number' ? row.score.toFixed(1) : row.score;
+        const accuracy = typeof row.accuracy === 'number' ? row.accuracy.toFixed(1) + '%' : row.accuracy;
+        const difficulty = row.difficulty ? (row.difficulty.charAt(0).toUpperCase() + row.difficulty.slice(1)) : 'Medium';
+
+        tr.innerHTML = `
+          <td><strong>#${rank}</strong></td>
+          <td>${escapeHTML(row.username)}</td>
+          <td>${score}</td>
+          <td>${accuracy}</td>
+          <td><span class="diff-badge">${difficulty}</span></td>
+          <td>${formattedDate}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loading.classList.add('hidden');
+    table.classList.remove('hidden');
+  })
+  .catch(err => {
+    console.error('Error loading leaderboard:', err);
+    loading.classList.add('hidden');
+    errorDiv.classList.remove('hidden');
+  });
+}
+
+/* ============================================================
    INITIALIZATION
    ============================================================ */
 function init() {
@@ -3790,6 +4224,22 @@ function init() {
   // Wire header buttons
   document.getElementById('btn-theme-toggle').addEventListener('click', toggleTheme);
   document.getElementById('btn-sound-toggle').addEventListener('click', toggleSound);
+
+  // Wire leaderboard buttons
+  document.getElementById('btn-leaderboard-submit').addEventListener('click', submitLeaderboardScore);
+  document.getElementById('btn-leaderboard-skip').addEventListener('click', () => {
+    document.getElementById('leaderboard-submit-container').classList.add('hidden');
+  });
+  document.getElementById('btn-leaderboard-back').addEventListener('click', () => {
+    navigate('#home');
+  });
+  document.getElementById('btn-leaderboard-retry').addEventListener('click', fetchLeaderboard);
+  document.getElementById('leaderboard-username').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitLeaderboardScore();
+    }
+  });
 
   // Wire clear stats button
   const clearBtn = document.getElementById('btn-clear-stats');
