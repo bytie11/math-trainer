@@ -4217,27 +4217,81 @@ function submitLeaderboardScore() {
     };
     console.log('Submitting:', JSON.stringify(payload));
 
-    return fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => {
-      if (!response.ok) {
+    // Helper to send the POST request, handling URL options dynamically
+    function tryPost(postPayload, useOnConflict) {
+      let fetchUrl = `${SUPABASE_URL}/rest/v1/leaderboard`;
+      if (useOnConflict) {
+        fetchUrl += '?on_conflict=username,difficulty';
+      }
+
+      return fetch(fetchUrl, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(postPayload)
+      })
+      .then(response => {
+        if (response.ok) {
+          return { success: true };
+        }
         return response.text().then(text => {
           let errMsg = `HTTP ${response.status}: ${response.statusText}`;
           try {
             const parsed = JSON.parse(text);
-            if (parsed.message) errMsg += ` - ${parsed.message}`;
+            if (parsed.message) errMsg = parsed.message;
           } catch(e) {}
-          throw new Error(errMsg);
+          return { success: false, error: errMsg };
+        });
+      });
+    }
+
+    // Try submitting with full payload and on_conflict constraint
+    return tryPost(payload, true)
+    .then(res1 => {
+      if (res1.success) return res1;
+
+      // Attempt 2: If failed because answer_options column is missing, try omitting it
+      if (res1.error.includes('answer_options')) {
+        const payload2 = { ...payload };
+        delete payload2.answer_options;
+        return tryPost(payload2, true)
+        .then(res2 => {
+          if (res2.success) return res2;
+
+          // Attempt 3: If that failed due to ON CONFLICT / constraint missing, try omitting on_conflict parameter
+          if (res2.error.includes('constraint') || res2.error.includes('ON CONFLICT') || res2.error.includes('on_conflict')) {
+            return tryPost(payload2, false);
+          }
+          throw new Error(res2.error);
         });
       }
+
+      // Attempt 2 (alternative): If failed due to ON CONFLICT constraint missing on Attempt 1
+      if (res1.error.includes('constraint') || res1.error.includes('ON CONFLICT') || res1.error.includes('on_conflict')) {
+        return tryPost(payload, false)
+        .then(res3 => {
+          if (res3.success) return res3;
+          // If that failed due to answer_options, try omitting answer_options
+          if (res3.error.includes('answer_options')) {
+            const payload3 = { ...payload };
+            delete payload3.answer_options;
+            return tryPost(payload3, false);
+          }
+          throw new Error(res3.error);
+        });
+      }
+
+      throw new Error(res1.error);
+    })
+    .then(finalResult => {
+      if (!finalResult.success) {
+        throw new Error(finalResult.error);
+      }
+
       // Save username to localStorage
       localStorage.setItem('mathTrainerUsername', username);
 
