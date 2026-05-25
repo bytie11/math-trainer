@@ -4202,11 +4202,16 @@ function submitLeaderboardScore() {
   })
   .then(rows => {
     if (rows.length > 0) {
-      const existing = rows[0];
-      if (session.scorePerMin <= existing.score) {
+      // Find the highest existing score across all rows for this user+difficulty
+      const bestExisting = Math.max(...rows.map(r => r.score));
+      if (session.scorePerMin <= bestExisting) {
         // Skip silently, show message
         statusMsg.textContent = "Your current record is higher — score not saved.";
         statusMsg.className = "leaderboard-status-msg info";
+        
+        // Re-enable inputs
+        usernameInput.disabled = false;
+        submitBtn.disabled = false;
         
         // Auto-hide form container after delay
         setTimeout(() => {
@@ -4216,131 +4221,37 @@ function submitLeaderboardScore() {
       }
     }
 
-    // 2. Perform upsert if no existing row or if new score is higher
+    // 2. Insert new row (score is higher or no existing row)
     statusMsg.textContent = "Submitting score...";
     const payload = {
       username,
       score: session.scorePerMin,
       accuracy: session.accuracy,
       difficulty,
-      operations: activeOps,
-      answer_options: session.choiceCount
+      operations: activeOps
     };
     console.log('Submitting:', JSON.stringify(payload));
 
-    // Helper to send the POST request, handling URL options dynamically
-    function tryPost(postPayload, useOnConflict) {
-      let fetchUrl = `${SUPABASE_URL}/rest/v1/leaderboard`;
-      if (useOnConflict) {
-        fetchUrl += '?on_conflict=username,difficulty';
-      }
-
-      return fetch(fetchUrl, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify(postPayload)
-      })
-      .then(response => {
-        if (response.ok) {
-          return { success: true };
-        }
+    return fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => {
+      if (!response.ok) {
         return response.text().then(text => {
           let errMsg = `HTTP ${response.status}: ${response.statusText}`;
           try {
             const parsed = JSON.parse(text);
-            if (parsed.message) errMsg = parsed.message;
+            if (parsed.message) errMsg += ` - ${parsed.message}`;
           } catch(e) {}
-          return { success: false, error: errMsg };
+          throw new Error(errMsg);
         });
-      });
-    }
-
-    // Try submitting with full payload and on_conflict constraint
-    return tryPost(payload, true)
-    .then(res1 => {
-      if (res1.success) return res1;
-
-      // Attempt 2: If failed because answer_options column is missing, try with answeroptions spelling
-      if (res1.error.includes('answer_options')) {
-        const payload2 = { ...payload };
-        delete payload2.answer_options;
-        payload2.answeroptions = session.choiceCount;
-
-        return tryPost(payload2, true)
-        .then(res2 => {
-          if (res2.success) return res2;
-
-          // Attempt 3: If that failed due to answeroptions, try omitting it
-          if (res2.error.includes('answeroptions')) {
-            const payload3 = { ...payload2 };
-            delete payload3.answeroptions;
-
-            return tryPost(payload3, true)
-            .then(res3 => {
-              if (res3.success) return res3;
-              // Attempt 4: If that failed due to ON CONFLICT / constraint missing, try omitting on_conflict parameter
-              if (res3.error.includes('constraint') || res3.error.includes('ON CONFLICT') || res3.error.includes('on_conflict')) {
-                return tryPost(payload3, false);
-              }
-              throw new Error(res3.error);
-            });
-          }
-
-          // Attempt 3 (alternative): If it failed due to constraint, try omitting on_conflict (keeping answeroptions)
-          if (res2.error.includes('constraint') || res2.error.includes('ON CONFLICT') || res2.error.includes('on_conflict')) {
-            return tryPost(payload2, false)
-            .then(res4 => {
-              if (res4.success) return res4;
-              // If that failed due to answeroptions, try omitting it
-              if (res4.error.includes('answeroptions')) {
-                const payload4 = { ...payload2 };
-                delete payload4.answeroptions;
-                return tryPost(payload4, false);
-              }
-              throw new Error(res4.error);
-            });
-          }
-          throw new Error(res2.error);
-        });
-      }
-
-      // Attempt 2 (alternative): If failed due to ON CONFLICT constraint missing on Attempt 1
-      if (res1.error.includes('constraint') || res1.error.includes('ON CONFLICT') || res1.error.includes('on_conflict')) {
-        return tryPost(payload, false)
-        .then(res5 => {
-          if (res5.success) return res5;
-          // If that failed due to answer_options, try answeroptions spelling without on_conflict
-          if (res5.error.includes('answer_options')) {
-            const payload2 = { ...payload };
-            delete payload2.answer_options;
-            payload2.answeroptions = session.choiceCount;
-
-            return tryPost(payload2, false)
-            .then(res6 => {
-              if (res6.success) return res6;
-              // If that failed due to answeroptions, try omitting it without on_conflict
-              if (res6.error.includes('answeroptions')) {
-                const payload3 = { ...payload2 };
-                delete payload3.answeroptions;
-                return tryPost(payload3, false);
-              }
-              throw new Error(res6.error);
-            });
-          }
-          throw new Error(res5.error);
-        });
-      }
-
-      throw new Error(res1.error);
-    })
-    .then(finalResult => {
-      if (!finalResult.success) {
-        throw new Error(finalResult.error);
       }
 
       // Save username to localStorage
@@ -4423,10 +4334,20 @@ function fetchLeaderboard(diff) {
     console.log('Leaderboard row data fetched:', data);
     const currentUsername = localStorage.getItem('mathTrainerUsername') || '';
 
-    if (data.length === 0) {
+    // Deduplicate: keep only the highest score per username
+    const bestByUser = new Map();
+    data.forEach(row => {
+      const existing = bestByUser.get(row.username);
+      if (!existing || row.score > existing.score) {
+        bestByUser.set(row.username, row);
+      }
+    });
+    const dedupedData = Array.from(bestByUser.values()).sort((a, b) => b.score - a.score);
+
+    if (dedupedData.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No scores submitted yet for this difficulty. Be the first!</td></tr>';
     } else {
-      data.forEach((row, index) => {
+      dedupedData.forEach((row, index) => {
         const tr = document.createElement('tr');
         if (currentUsername && row.username === currentUsername) {
           tr.classList.add('highlight-user');
