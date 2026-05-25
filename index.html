@@ -4418,6 +4418,7 @@ function fetchLeaderboard(diff) {
       });
     }
     return response.json();
+  })
   .then(data => {
     console.log('Leaderboard row data fetched:', data);
     const currentUsername = localStorage.getItem('mathTrainerUsername') || '';
