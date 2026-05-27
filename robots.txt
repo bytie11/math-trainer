@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bytie11.github.io/math-trainer/sitemap.xml

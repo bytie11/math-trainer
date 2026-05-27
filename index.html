@@ -3,20 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tradermath Math Trainer — Sharpen Your Mental Arithmetic</title>
-  <meta name="description" content="A professional mental math trainer for traders and professionals. Practice addition, subtraction, multiplication, and division with timed sessions and performance analytics.">
+
+  <!-- Primary SEO Meta Tags -->
+  <title>Mental Math Trainer — Speed Arithmetic Practice for Traders | Tradermath</title>
+  <meta name="description" content="Free online mental math trainer with timed drills, 5 difficulty levels, and a global leaderboard. Practice addition, subtraction, multiplication, and division to build calculation speed — ideal for traders, students, and math enthusiasts.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://bytie11.github.io/math-trainer/">
+  <meta name="keywords" content="mental math trainer, math speed test, arithmetic practice, calculation speed training, trader math, mental calculation, math drill, timed math quiz">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bytie11.github.io/math-trainer/">
+  <meta property="og:title" content="Mental Math Trainer — Speed Arithmetic Practice for Traders">
+  <meta property="og:description" content="Free timed mental math drills with 5 difficulty levels, performance analytics, and a global leaderboard. Sharpen your calculation speed today.">
+  <meta property="og:site_name" content="Tradermath">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Mental Math Trainer — Speed Arithmetic Practice for Traders">
+  <meta name="twitter:description" content="Free timed mental math drills with 5 difficulty levels, performance analytics, and a global leaderboard. Sharpen your calculation speed today.">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Tradermath Mental Math Trainer",
+    "url": "https://bytie11.github.io/math-trainer/",
+    "description": "Free online mental math trainer with timed speed drills, five difficulty levels, performance analytics, and a global leaderboard. Ideal for traders, students, and professionals who want to sharpen calculation speed.",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires a modern web browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Timed mental math drills",
+      "Addition, subtraction, multiplication, division",
+      "Integer, decimal, and fraction questions",
+      "5 difficulty levels: Beginner, Easy, Medium, Hard, Expert",
+      "Multiple choice and open-ended modes",
+      "Performance analytics with score and speed trends",
+      "Global leaderboard via Supabase"
+    ],
+    "author": {
+      "@type": "Person",
+      "name": "Tradermath"
+    }
+  }
+  </script>
+
+  <!-- PWA & Mobile -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Math Trainer">
   <meta name="theme-color" content="#3d1515">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233d1515'/><text y='.9em' font-size='70' x='15'>🧮</text></svg>">
   <link rel="manifest" href="manifest.json">
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- External Libraries (defer to reduce render-blocking) -->
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js" defer></script>
   <style>
 /* ============================================================
    DESIGN SYSTEM — CSS Custom Properties & Base Styles
@@ -1909,6 +1965,111 @@ main {
 }
 
 /* ============================================================
+   SEO HERO — Page H1 & Subtitle
+   ============================================================ */
+.seo-hero {
+  text-align: center;
+  padding: 24px 16px 8px;
+}
+
+.seo-hero-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+
+.seo-hero-subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 540px;
+  margin-inline: auto;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   SEO CONTENT — About section below app UI
+   ============================================================ */
+.seo-content {
+  max-width: 800px;
+  margin: 32px auto 0;
+  padding: 28px 24px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border);
+}
+
+.seo-content-heading {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 10px;
+}
+
+.seo-content > p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  margin: 0 0 20px;
+}
+
+.seo-features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.seo-feature {
+  padding: 14px;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.seo-feature h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.seo-feature p {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .seo-features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seo-hero-title {
+    font-size: 1.25rem;
+  }
+}
+
+/* ============================================================
+   SITE FOOTER
+   ============================================================ */
+.site-footer {
+  text-align: center;
+  padding: 20px 16px;
+  font-size: 0.8rem;
+  color: var(--color-text-faint);
+  border-top: 1px solid var(--color-border);
+  margin-top: 32px;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* ============================================================
    HIDDEN UTILITY
    ============================================================ */
 .hidden { display: none !important; }
@@ -1954,14 +2115,20 @@ main {
          HOME VIEW
          ================================== -->
     <section id="view-home" class="view active" aria-label="Home — Settings and Analytics">
+      <!-- Primary H1 — single page heading for SEO -->
+      <div class="seo-hero">
+        <h1 class="seo-hero-title">Mental Math Trainer — Sharpen Your Calculation Speed</h1>
+        <p class="seo-hero-subtitle">Timed arithmetic drills for traders, students, and math enthusiasts. Choose your difficulty and start training.</p>
+      </div>
+
       <div class="home-grid">
         <!-- ---- CONTROL PANEL ---- -->
         <div class="card" id="control-panel">
           <div class="card-header">
-            <h1 class="card-title">
+            <h2 class="card-title">
               <i data-lucide="sliders-horizontal" width="20" height="20" class="icon"></i>
               Control Panel
-            </h1>
+            </h2>
           </div>
 
           <!-- Operations -->
@@ -2174,6 +2341,32 @@ main {
           </div>
         </div>
       </div>
+
+      <!-- SEO Content Section — visible, useful information for search engines and users -->
+      <article class="seo-content" aria-label="About this mental math trainer">
+        <h2 class="seo-content-heading">What Is Tradermath?</h2>
+        <p>Tradermath is a free, browser-based <strong>mental math trainer</strong> designed to help you build <strong>calculation speed</strong> and <strong>arithmetic accuracy</strong>. Whether you are a trader who needs lightning-fast number skills, a student preparing for quantitative exams, or anyone who wants to sharpen mental arithmetic — this tool gives you focused, timed practice with instant feedback.</p>
+
+        <div class="seo-features-grid">
+          <div class="seo-feature">
+            <h3>Practice Modes</h3>
+            <p>Choose between <strong>multiple-choice</strong> (3, 4, or 5 options) and <strong>open-ended</strong> input. Select the operations you want to drill: addition, subtraction, multiplication, and division across integers, decimals, and fractions.</p>
+          </div>
+          <div class="seo-feature">
+            <h3>Five Difficulty Levels</h3>
+            <p>From <strong>Beginner</strong> to <strong>Expert</strong>, each level adjusts number ranges, includes negative numbers, and introduces mixed fractions at higher levels. Progress at your own pace with tailored challenges.</p>
+          </div>
+          <div class="seo-feature">
+            <h3>Performance Analytics</h3>
+            <p>Track your <strong>score per minute</strong>, accuracy, average speed, and personal bests over time. Visual charts show your improvement across sessions so you can measure real progress.</p>
+          </div>
+          <div class="seo-feature">
+            <h3>Global Leaderboard</h3>
+            <p>Submit your best scores and compete with other users on the <strong>global leaderboard</strong>, filtered by difficulty level. See where you stand against traders and math enthusiasts worldwide.</p>
+          </div>
+        </div>
+      </article>
+
     </section>
 
     <!-- ==================================
@@ -2290,10 +2483,10 @@ main {
       <div class="leaderboard-container">
         <div class="card leaderboard-card">
           <div class="card-header">
-            <h1 class="card-title">
+            <h2 class="card-title">
               <i data-lucide="trophy" width="20" height="20" class="icon trophy-icon"></i>
               Global Leaderboard
-            </h1>
+            </h2>
             <button class="btn-ghost btn-sm" id="btn-leaderboard-back">
               <i data-lucide="arrow-left" width="16" height="16"></i>
               Back
@@ -2343,6 +2536,11 @@ main {
     </section>
 
   </main>
+
+  <!-- Semantic Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <p>Tradermath — Free mental math trainer for speed arithmetic practice. Built for traders, students, and math enthusiasts.</p>
+  </footer>
 
   <!-- ============================================================
        CONFIRMATION MODAL
